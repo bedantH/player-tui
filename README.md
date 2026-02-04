@@ -2,7 +2,7 @@
 
 A vibrant and lightweight Terminal User Interface (TUI) for controlling media players on Linux via `playerctl`. Built with Rust and `ratatui`, it provides a sleek way to visualize and control your currently playing audio.
 
-![App Screenshot](https://raw.githubusercontent.com/ratatui/ratatui/main/assets/logo.png) <!-- Placeholder for actual screenshot if available -->
+![App Screenshot](./screenshots/image.png) <!-- Placeholder for actual screenshot if available -->
 
 ## Features
 
@@ -40,6 +40,40 @@ Run the application:
 ```
 
 ### Keybindings
+
+The interface looks great as a floating centered window, for me on omarchy, I attached this to a keybind like `Leader + Shift + P`, omarchy currently doesn't have a default application to launch something as a floating-centered window. 
+
+You can use this bash-script to open one if you are on Hyprland using `uwsm-app`
+```bash
+   #!/bin/bash
+   if (($# == 0)); then
+      echo "Usage: omarchy-launch-floating-tui [command] [args...]"
+      exit 1
+   fi
+
+   WINDOW_PATTERN="$1"
+   WINDOW_ADDRESS=$(hyprctl clients -j | jq -r --arg p "$WINDOW_PATTERN" '.[]|select((.class|test("\\b" + $p + "\\b";"i")) or (.title|test("\\b" + $p + "\\b";"i")))|.address' | head -n1)
+
+   if [[ -n $WINDOW_ADDRESS ]]; then
+      hyprctl dispatch focuswindow "address:$WINDOW_ADDRESS"
+   else
+      exec setsid uwsm-app -- xdg-terminal-exec --app-id=org.omarchy.floating.$(basename "$1") -e "$1" "${@:2}"
+   fi
+```
+You can specify a different app-id under the argument, this app-id will be used to write the hyprland window rule to make the window floating and centered: 
+
+Add the following in `hyprland.conf` or wherever you might have any existing window rules:
+```bash
+windowrule = float on, match:class org.omarchy.floating.*
+windowrule = center on, match:class org.omarchy.floating.*
+windowrule = size 600 400, match:class org.omarchy.floating.*
+```
+
+And then you can add keybind in your `bindings.conf` like: 
+```bash
+   bindd = SUPER SHIFT, P, Player TUI, exec, omarchy-launch-floating-tui /home/bedanth/.custom-apps/player-tui
+```
+_Note_: Syntax and arguments may differ based on your current settings, so make sure to refer to the docs or any current keybindings you already have for syntax.
 
 | Key | Action |
 |-----|--------|
